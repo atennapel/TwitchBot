@@ -1,0 +1,19 @@
+{
+    "name" : "twitchbot",
+    "description" : "A library to help in creating Twitch bots",
+    "version" : "0.1",
+    "author" : "Albert ten Napel <aptennap@gmail.com>",
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/atennapel/TwitchBot"
+    },
+    "bugs" : {
+        "mail" : "aptennap@gmail.com",
+        "url" : "https://github.com/atennapel/TwitchBot/issues"
+    },
+    "main" : "lib/twitchbot",
+    "engines" : { "node" : ">=0.4.0" },
+    "dependencies": {
+        "irc" : "0.3.6"
+    }
+}
