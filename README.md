@@ -14,6 +14,8 @@ The server of the irc (defaults to `irc.twitch.tv`)
 The port of the irc (defaults to `6667`)
 #### commandChar
 The character that precedes commands (defaults to `!`)
+#### varChar
+The character to put variables in a string (defaults to `)
 #### debug
 If set to true, debug messages will be output to the console (defaults to `false`)
 #### name (required)
@@ -37,5 +39,7 @@ Let the bot send a message.
 Add commands to the bot.
 ### addVars(name, value, ...)
 Add variables to the bot (to be used in the command results).
+### getVar(var)
+Get a variable.
 ### doMessage(text, [from, to, msg])
 Send a message to the bot as if an user send a message to the channel.
