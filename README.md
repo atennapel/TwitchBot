@@ -37,3 +37,5 @@ Let the bot send a message.
 Add commands to the bot.
 ### addVars(name, value, ...)
 Add variables to the bot (to be used in the command results).
+### doMessage(text, [from, to, msg])
+Send a message to the bot as if an user send a message to the channel.
