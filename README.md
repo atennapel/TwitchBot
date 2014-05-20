@@ -4,6 +4,12 @@ TwitchBot
 A Node.JS module to help in creating Twitch bots.
 
 # API
+## static functions
+### loadJSON(filename)
+Loads a JSON file, if the file doesn't exists returns an empty object.
+### saveJSON(filename, obj)
+Saves an object as a JSON file.
+
 ## TwitchBot methods
 
 ### TwitchBot(options)
@@ -35,6 +41,8 @@ Returns if user is a mod.
 Start the bot.
 ### say(msg)
 Let the bot send a message.
+### sayWithVars(msg, [vars])
+Let the bot send a message and replace any vars.
 ### addCommands(command, result, ...)
 Add commands to the bot.
 ### addVars(name, value, ...)
@@ -43,3 +51,5 @@ Add variables to the bot (to be used in the command results).
 Get a variable.
 ### doMessage(text, [from, to, msg])
 Send a message to the bot as if an user send a message to the channel.
+### onJoin(fn)/onLeave(fn)
+Add an event when an user joins/leaves, the function get the name of the user as argument.
