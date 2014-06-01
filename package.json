@@ -1,7 +1,7 @@
 {
     "name" : "twitchbot",
     "description" : "A library to help in creating Twitch bots",
-    "version" : "0.8.2",
+    "version" : "0.8.3",
     "author" : "Albert ten Napel <aptennap@gmail.com>",
     "repository" : {
         "type" : "git",
