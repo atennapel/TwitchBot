@@ -1,7 +1,7 @@
 {
 	"channel": "labbekak",
 	"name": "labbebot",
-	"password": "PASSWORD",
+	"password": "TWITCH IRC PASSWORD",
 
 	"wrLink": "http://www.twitch.tv/chutsc2/c/3564259",
 	"wrHolder": "cHuT",
