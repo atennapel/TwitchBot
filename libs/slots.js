@@ -72,7 +72,7 @@ function(bot, twitchbot) {
 	var working = true;
 
 	if(SAVE_TO_FILE) {
-		bot.addOnExitEvent(function() {twitchbot.saveJSON(FILE, players)});
+		bot.onExit(function() {twitchbot.saveJSON(FILE, players)});
 		if(SAVE_IN_INTERVAL)
 			setInterval(function() {twitchbot.saveJSON(FILE, players)}, SAVE_TIME);
 	}

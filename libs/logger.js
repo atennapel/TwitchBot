@@ -32,7 +32,7 @@ function(bot, twitchbot) {
 	bot.logger_logs = logs;
 
 	if(SAVE_TO_FILE) {
-		bot.addOnExitEvent(function() {twitchbot.saveJSON(FILE, logs)});
+		bot.onExit(function() {twitchbot.saveJSON(FILE, logs)});
 		if(SAVE_IN_INTERVAL)
 			setInterval(function() {twitchbot.saveJSON(FILE, logs)}, SAVE_TIME);
 	}
