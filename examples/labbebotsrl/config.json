@@ -1,0 +1,37 @@
+{
+	"server": "irc2.speedrunslive.com",
+	"channel": "#deusex",
+	"name": "Labbebot",
+	"debug": true,
+	"log": true, 
+
+	"wr": "The WRs are DX 36:09, IW 43:24, HR 52:06, HRDC 1:12:40, TF 22:22",
+	"dxwr": "Deus Ex WR is 36:09 by cHuT: http://www.twitch.tv/chutsc2/c/3564259",
+	"iwwr": "Deus Ex: Invisible War WR is 43:24 by Heinki: http://www.twitch.tv/heinki/c/4174828",
+	"hrwr": "Deus Ex: Human Revolution WR is 52:06 by Heinki: http://www.twitch.tv/heinki/c/5009898",
+	"hrdcwr": "Deus Ex: Human Revolution Director's Cut WR is 1:12:40 by Heinki: http://www.twitch.tv/heinki/c/5051090",
+	"tfwr": "Deus Ex: The Fall WR is 22:22 by SuicideMachine: http://www.twitch.tv/suicidemachine/c/4860060",
+
+	"lb": "The leaderboards are at http://tinyurl.com/deusexlb or http://speedrun.com/deus_ex",
+
+	"slots": {
+		"coinName": "labbecoin(s)",
+		"startingAmount": 100,
+		"limit": 10000,
+		"winMultiplier": 1000,
+		"faces": ["Kappa", "Keepo", "FrankerZ", "BibleThump", "FailFish"],
+		
+		"saveToFile": true,
+		"file": "slots.json",
+		"saveInInterval": true,
+		"saveTime": 60000
+	},
+	"logger": {
+		"logPrivateMessages": false,
+		"saveToFile": true,
+		"file": "logs.json",
+		"saveInInterval": true,
+		"saveTime": 60000,
+		"free": true
+	}
+}
