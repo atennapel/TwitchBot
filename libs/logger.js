@@ -1,6 +1,6 @@
 /* Logger lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.3
+ * @version: 0.4
  *
  * the log option for your TwitchBot must be true.
  *
@@ -42,8 +42,9 @@ function(bot, twitchbot) {
 	}
 
 	bot.addLogger(function(from, to, text, message) {
+		var isCh = Array.isArray(to)? to[0][0] == '#': to[0] == '#';
 		var s = from + ': ' + text;
-		if(to[0] == '#' || LOG_PRIVMSG) {
+		if(isCh || LOG_PRIVMSG) {
 			console.log(s);
 			logs.push(s);
 		}
