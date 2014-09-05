@@ -1,6 +1,6 @@
 /* Logger lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.5
+ * @version: 0.6
  *
  * Adds a simple logging system to the bot.
  * The log option for your TwitchBot must be true.
@@ -174,15 +174,18 @@ function(bot, twitchbot) {
 		return 'The logs file has ' + logs.length + ' lines.';
 	});
 
-	if(SERVER) {
+	function startServer(port, ip) {
 		var http = require('http');
 		var server = http.createServer(function(req, res) {
 			res.end(showLogs());
 		});
-		server.listen(PORT, IP);
+		server.listen(port, ip);
 	}
 
+	if(SERVER) startServer(PORT, IP);
+
 	return {
-		logs: logs
+		logs: logs,
+		startServer: startServer
 	};
 }

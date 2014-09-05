@@ -1,6 +1,6 @@
 /* Quotes lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.1
+ * @version: 0.2
  *
  * Adds a quotes system so that users can get random quotes and so that people can add quotes.
  * The quotes are divided in groups (such as quotes from movies, or specific games) and the
@@ -68,10 +68,7 @@ function(bot, twitchbot) {
 	function pickk(o) {return pick(keys(o))};
 
 	function format(group, person, quote) {
-		return '"' + quote + '" - ' + person;
-	};
-	function format(group, person, quote) {
-		var vars = {group: group, person, person, quote: quote};
+		var vars = {group: group, person: person, quote: quote};
 		return FORMAT.replace(/\$[a-z]+/gi,
 			function(x) {return vars[x.slice(1)] || ''});
 	}
@@ -124,7 +121,7 @@ function(bot, twitchbot) {
 		quotes[group] = quotes[group] || {};
 		quotes[group][name] = quotes[group][name] || [];
 		quotes[group][name].push(quote);
-)
+
 		return 'Quote of ' + name + ' added!';
 	});
 
