@@ -1,6 +1,6 @@
 /* Logger lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.6
+ * @version: 0.7
  *
  * Adds a simple logging system to the bot.
  * The log option for your TwitchBot must be true.
@@ -106,12 +106,12 @@ function(bot, twitchbot) {
 				var line = c.trim().toLowerCase();
 				if(line.indexOf(m) > -1) r.push(c);
 			} else {
-				var line = c.text.trim().toLowerCase();
+				var line = c.message.trim().toLowerCase();
 				if(line.indexOf(m) > -1) r.push(c);
 			}
 		}
 		if(r.length == 0) return 'No matches';
-		else return 'Found ' + r.length + ' matches\n' + showLogs(r).join('\n');
+		else return 'Found ' + r.length + ' matches\n' + showLogs(r);
 	});
 
 	bot.addCommand(cmd('searchlogsfrom'), function(o) {
@@ -126,12 +126,12 @@ function(bot, twitchbot) {
 				var line = t.slice(1).join(':').trim();
 				if(from == name && line.indexOf(m) > -1) r.push(c);
 			} else {
-				var line = c.text.toLowerCase();
+				var line = c.message.toLowerCase();
 				if(c.from.toLowerCase() == name && line.indexOf(m) > -1) r.push(c);
 			}
 		}
 		if(r.length == 0) return 'No matches';
-		else return 'Found ' + r.length + ' matches\n' + showLogs(r).join('\n');
+		else return 'Found ' + r.length + ' matches\n' + showLogs(r);
 	});
 
 	bot.addCommand(cmd('countlogs'), function(o) {
@@ -142,7 +142,7 @@ function(bot, twitchbot) {
 				var line = c.trim().toLowerCase();
 				if(line.indexOf(m) > -1) r++;
 			} else {
-				var line = c.text.trim().toLowerCase();
+				var line = c.message.trim().toLowerCase();
 				if(line.indexOf(m) > -1) r++;
 			}
 		}
@@ -162,7 +162,7 @@ function(bot, twitchbot) {
 				var line = t.slice(1).join(':').trim();
 				if(from == name && line.indexOf(m) > -1) r++;
 			} else {
-				var line = c.text.toLowerCase();
+				var line = c.message.toLowerCase();
 				if(c.from.toLowerCase() == name && line.indexOf(m) > -1) r++;
 			}
 		}

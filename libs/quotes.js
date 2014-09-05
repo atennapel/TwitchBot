@@ -1,6 +1,6 @@
 /* Quotes lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.2
+ * @version: 0.3
  *
  * Adds a quotes system so that users can get random quotes and so that people can add quotes.
  * The quotes are divided in groups (such as quotes from movies, or specific games) and the
@@ -34,7 +34,7 @@ function(bot, twitchbot) {
 	var FREE = config.free || false;
 	var FORMAT = config.format || '"$quote" - $person';
 	var DEFAULT = config.default || 'default';
-	var ALIAS = config.alias || {};
+	var ALIAS = config.aliases || {};
 
 	var quotes = {};
 	if(SAVE_TO_FILE) {
@@ -92,6 +92,15 @@ function(bot, twitchbot) {
 		return 'Cannot find a quote group called ' + group;
 	});
 
+	bot.addCommand('@quotefrom', function(o) {
+		var name = o.rest.trim();
+		for(var k in quotes)
+			for(var nameq in quotes[k])
+				if(match(name, nameq))
+					return getQuote(k, nameq);
+		return 'Cannot find a quote group called ' + group;
+	});
+
 	bot.addCommand(cmd('addquote'), function(o) {
 		var group = DEFAULT;
 		var s = o.rest.split(':');
@@ -129,9 +138,18 @@ function(bot, twitchbot) {
 		var a = ALIAS[group];
 		a = Array.isArray(a)? a: [a];
 		for(var i = 0, l = a.length; i < l; i++) {
-			bot.addCommand('@' + a[i], function() {
-				return getQuote(group);
-			});
+			var fn = function _t(o) {
+				var name = o.rest.trim();
+				var gr = _t.group;
+				if(!quotes[gr])
+					return 'Cannot find a quote group called ' + gr;
+				if(!name) return getQuote(gr);
+				var m = findMatch(name, keys(quotes[gr]));
+				if(m) return getQuote(gr, m);
+				return 'Could not find a quote.';
+			};
+			fn.group = ''+group;
+			bot.addCommand('@' + a[i], fn);
 		}
 	}
 
