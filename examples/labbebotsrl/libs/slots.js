@@ -1,6 +1,9 @@
 /* Slot machine lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.2
+ * @version: 0.3
+ *
+ * Adds a simple slots machine to the bots. User can gamble coins and three random TwitchFaces will be shown.
+ * If all the faces are equal the user wins more coins.
  *
  * 	Options: {
  *		coinName: name of the coin,
@@ -52,8 +55,15 @@ function(bot, twitchbot) {
 		coinsreceived: true
 	};
 	var limits = {};
+
 	var players = {};
-	if(SAVE_TO_FILE) players = twitchbot.loadJSON(FILE);
+	if(SAVE_TO_FILE) {
+		var file = new twitchbot.JSONFile(FILE);
+		file.onExitSave(bot);
+		if(SAVE_IN_INTERVAL) file.saveEvery(SAVE_TIME);
+		players = file.load().get();
+	}
+
 	var randNum = function() {return 0|Math.random()*EMOTICONS.length};
 	var numToEmoticon = function(n) {return EMOTICONS[n]};
 	var checkPlayer = function(player) {
@@ -70,12 +80,6 @@ function(bot, twitchbot) {
 			};
 	};
 	var working = true;
-
-	if(SAVE_TO_FILE) {
-		bot.onExit(function() {twitchbot.saveJSON(FILE, players)});
-		if(SAVE_IN_INTERVAL)
-			setInterval(function() {twitchbot.saveJSON(FILE, players)}, SAVE_TIME);
-	}
 
 	bot.addCommand('@slots', function(o) {
 		if(!working) return;
@@ -214,4 +218,8 @@ function(bot, twitchbot) {
 
 	bot.addCommand('turnoffslots', function() {working = false});
 	bot.addCommand('turnonslots', function() {working = true});
+
+	return {
+		players: players
+	};
 }

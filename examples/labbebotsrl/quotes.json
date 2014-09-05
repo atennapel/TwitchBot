@@ -278,5 +278,93 @@
 			"You picked the wrong person to mug, punk.",
 			"Well, I must be dead now, because I'm up to my eyeballs in biomods."
 		]
+	},
+	"default": {
+    "Black Knight": [
+        "It's just a flesh wound.",
+        "I'm invincible!",
+        "'Tis but a scratch!"
+    ],
+    "Brian's mother": [
+        "Now, you listen here! He's not the Messiah. He's a very naughty boy!"
+    ],
+    "Bridgekeeper": [
+        "What... is the capital of Assyria?",
+        "What... is the air-speed velocity of an unladen swallow?"
+    ],
+    "Claudette": [
+        "I got the results of the test back - I definitely have breast cancer."
+    ],
+    "Daniel Plainview": [
+        "No, I'll go and talk to the man. I'll talk to him, show you how it's done."
+    ],
+    "French Soldier": [
+        "I don't want to talk to you no more, you empty-headed animal food trough wiper! I fart in your general direction! Your mother was a hamster and your father smelt of elderberries!",
+        "Go away or I shall taunt you a second time!"
+    ],
+    "French Solider": [
+        "I don't want to talk to you no more, you empty-headed animal food trough wiper! I fart in your general direction! Your mother was a hamster and your father smelt of elderberries!"
+    ],
+    "God": [
+        "Get on with it!"
+    ],
+    "Johnny": [
+        "Anyway, how is your sex life?",
+        "I did not hit her, it's not true! It's bullshit! I did not hit her!",
+        "You must be kidding, underwear, I got the picture."
+    ],
+    "Joseph Stalin": [
+        "The Pope? How many divisions has he got?"
+    ],
+    "J\u00c3\u00b3zef Pi\u00c5\u201asudski": [
+        "To be defeated and not submit, is victory - to be victorious and rest on one's laurels, is defeat."
+    ],
+    "King Arthur": [
+        "This new learning amazes me, Sir Bedevere. Explain again how sheep's bladders may be employed to prevent earthquakes."
+    ],
+    "King of Swamp Castle": [
+        "When I first came here, this was all swamp. Everyone said I was daft to build a castle on a swamp, but I built in all the same, just to show them. It sank into the swamp. So I built a second one. That sank into the swamp. So I built a third. That burned down, fell over, then sank into the swamp. But the fourth one stayed up. And that's what you're going to get, Lad, the strongest castle in all of"
+    ],
+    "Knights who say Ni": [
+        "Ni!",
+        "Bring us a shrubbery!",
+        "Nee hee hee!",
+        "We will attack you on the count of three! One, two, 6.022x10^23..."
+    ],
+    "Mark": [
+        "You don't understand anything, man. Leave your *stupid* comments in your pocket!"
+    ],
+    "Mr. Warrenn": [
+        "What is this mess? An empty desk is an efficient desk."
+    ],
+    "Oscar Wilde": [
+        "I am so clever that sometimes I don't understand a single word of what I am saying."
+    ],
+    "Soldier": [
+        "I have done nothing but teleport bread for three days."
+    ],
+    "Spy": [
+        "SEDUCE ME!"
+    ],
+    "Steven": [
+        "I feel like I'm sitting on an atomic bomb waiting for it to go off."
+    ],
+    "The Dead Collector": [
+        "Bring out yer dead."
+    ],
+    "Thomas Angelo": [
+        "I think it's important to keep a balance in things. Yeah, balance, that's the right word. Cause the guy who wants too much risks losing absolutely everything. Of course, the one who wants too little from life might not get anything at all.",
+        "Laws aren't changeless, holy words. Every country in the world has their own. It's just somebody with a lot of power applying their own will. It depends on the person whether they'll serve someone else blindly, or apply their own will."
+    ],
+    "Tim": [
+        "Well, that's no ordinary rabbit."
+    ],
+    "Vladimir Lenin": [
+        "A lie told often enough becomes the truth."
+    ],
+    "nathnolt": [
+        "doet pijn",
+        "the spam is 2 spammy"
+    ]
 	}
 }

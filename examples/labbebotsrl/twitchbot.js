@@ -1,7 +1,32 @@
 /*	TwitchBot
  *	@author: Albert ten Napel
  *	@mail: aptennap@gmail.com 
- *	@version: 0.8.7
+ *	@version: 0.9.1
+ *
+ * 	Options: {
+ *		server: the irc server, defaults to 'irc.twitch.tv'
+ * 		port: the port of the irc, defaults to '6667'
+ *		channel: the channel for the bot to join (can be a list, but not recommended)
+ *		name: the (user)name of the bot
+ *		password: the irc password (for twitch retrieve one at tmi.twitch.tv)
+ *
+ *		debug: whether to show irc debug messages
+ *		log: whether to use loggers (like the logger lib)
+ *
+ *		commandChar: the character that precedes commands, defaults to '!'
+ *		varChar: the character to surrounds variables in commands, defaults to '`'
+ *
+ *		libsLocation: the directory where the libs are stored (defaults to 'libs')
+ *		libs: a list of which libs to use (use 'all' to load all libs in the libs directory)
+ *
+ *		commands: a list (or object) of simple commands
+ *		intervals: a list of {interval: [time in milliseconds], message: [message]} objects, these messages will be shown at their interval
+ *		
+ *		saveToFile: whether to save and load the player data to file,
+ *		file: the file to use,
+ *		saveInInterval: whether to save every so often,
+ *		saveTime: if saveInInterval is true, how often to save in milliseconds
+ *	}
  */
 
 var TWITCH_IRC_SERVER = 'irc.twitch.tv'; 
@@ -32,15 +57,17 @@ var escapeForRegExp = function(c) {return '\\'+c};
 var irc = require('irc');
 var fs = require('fs');
 
-var TwitchBot = function(o) {
-	var o = o || {};
+function TwitchBot(o) {
+	var o = arguments.length == 0?
+						{}:
+					typeof o == 'string'?
+						loadJSON(o, {}): o;
 	this.config 			= o;
 	this.server 			= o.server 			|| TWITCH_IRC_SERVER;
 	this.port 				= o.port 				|| TWITCH_IRC_PORT;
 	this.commandChar 	= o.commandChar || COMMAND_CHAR;
 	this.varChar		 	= o.varChar 		|| VAR_CHAR;
 	this.debug				= o.debug 			|| false;
-	this._autosave 		= o.autosave 		|| false;
 	this.log 					= o.log					|| false;
 	this.loggers			= [];
 	this._onexit 			= [];
@@ -69,6 +96,40 @@ var TwitchBot = function(o) {
 		commands: function() {return this.getCommands().join(', ')},
 		freecommands: function() {return this.getFreeCommands().join(', ')}
 	};
+
+	this.file = o.file || 'bot.json';
+	this._autosave = o.saveToFile || false;
+
+	if(o.saveInInterval)
+		setInterval(this.autosave.bind(this), o.saveTime || 60*1000);
+
+	if(this._autosave) this.load(this.file);
+	
+	if(o.libs || o.libsLocation) {
+		var folder = o.libsLocation || 'libs';
+		if(o.libs == 'all' || !o.libs) this.loadLibs(folder);
+		else this.loadLibs(folder, o.libs);
+	}
+
+	if(o.commands) {
+		var com = o.commands;
+		if(!Array.isArray(com)) {
+			var c = [];
+			for(var k in com)
+				c.push(k, com[k]);
+			com = c;
+		}
+		this.addCommands.apply(this, com);
+	}
+	
+	if(o.intervals) {
+		for(var i = 0, a = o.intervals, l = a.length; i < l; i++) {
+			var c = a[i];
+			var t = c.interval || 1000*60*10;
+			var m = c.message;
+			this.addIntervalMessage(m, t);
+		}
+	}
 };
 
 TwitchBot.prototype.users = function() {return Object.keys(this._users)};
@@ -271,37 +332,32 @@ TwitchBot.prototype.addVar = TwitchBot.prototype.addVars;
 
 TwitchBot.prototype.loadLib = function(file) {
 	if(!/.*\.js/i.test(file)) file += '.js';
-	fs.readFile(file, (function(err, f) {
-		if(err) throw err;
-		eval('('+f+')').call(this, this, twitchbot);
-	}).bind(this));
+	var t = file.split('/');
+	var name = t[t.length-1].split('.').slice(0, -1).join('.');
+	var f = fs.readFileSync(file).toString();
+	var fn = eval('('+f+')');
+	this[name] = fn.call(this, this, twitchbot) || {};
 	return this;
 };
 
-TwitchBot.prototype.loadLibs = function(files) {
+TwitchBot.prototype.loadLibs = function(files, a) {
 	if(Array.isArray(files)) files.forEach(this.loadLib.bind(this));
-	else fs.readdir(files, (function(err, fl) {
-		if(err) throw err;
-		fl.filter(function(x) {return /.*\.js/i.test(x)}).forEach((function(x) {
-			this.loadLib.call(this, files+'/'+x);
+	else {
+		var fl = fs.readdirSync(files).filter(function(x) {return /.*\.js/i.test(x)}).forEach((function(x) {
+			if(!a || a.indexOf(x) > -1) this.loadLib.call(this, files+'/'+x);
 		}).bind(this));
-	}).bind(this));
+	}
 	return this;
 };
 
-TwitchBot.prototype.setAutosave = function(file) {return this._autosave = file, this};
-TwitchBot.prototype.autosave = function() {if(this._autosave) this.save(this._autosave); return this};
+TwitchBot.prototype.autosave = function() {if(this._autosave) this.save(this.file); return this};
 
 TwitchBot.prototype.save = function(file) {
 	for(var i = 0, a = SAVEABLE_PROPS, l = a.length, o = {}; i < l; i++) {
 		var c = a[i];
 		o[c] = anyToJSONObj(this[c]);
 	}
-	try {
-		fs.writeFileSync(file, JSON.stringify(o));
-	} catch(err) {
-		console.log(err);
-	}
+	fs.writeFileSync(file, JSON.stringify(o));
 	return this;
 };
 
@@ -355,39 +411,79 @@ var loadJSON = function(fname, v, fn) {
 	if(fn) {
 		return fs.readFile(fname, function(err, data) {
 			if(err) {
-				if(err.errno == 34) fn(v || {});
-				else console.log(err);
-			} else fn(JSON.parse(data));
+				if(err.errno == 34) fn(err, v || {});
+				else f(err);
+			} else fn(err, JSON.parse(data));
 		});
 	} else {
 		try {
 			return JSON.parse(fs.readFileSync(fname));
 		} catch (err) {
 			if(err.errno == 34) return v || {};
-			else console.log(err);
+			else throw err;
 		}
 	}
-}
+};
 
 var saveJSON = function(fname, obj, fn) {
 	if(fn) {
-		return fs.writeFile(fname, JSON.stringify(obj), function(err) {
-			if(err) console.log(err);
-			else if(typeof fn == 'function') fn();
-		});
+		return fs.writeFile(fname, JSON.stringify(obj), fn);
 	} else {
-		try {
-			return fs.writeFileSync(fname, JSON.stringify(obj));
-		} catch (err) {
-			console.log(err);	
-		}
+		return fs.writeFileSync(fname, JSON.stringify(obj));
 	}
-}
+};
+
+function JSONFile(file, val) {
+	this.file = file;
+	this.val = val;
+};
+
+JSONFile.prototype.save = function(fn) {
+	saveJSON(this.file, this.val, fn);
+	return this;
+};
+
+JSONFile.prototype.load = function(v, fn) {
+	this.val = loadJSON(this.file, v, fn);
+	return this;
+};
+
+JSONFile.prototype.onExitSave = function(bot) {
+	bot.onExit(this.save.bind(this));
+	return this;
+};
+
+JSONFile.prototype.saveEvery = function(time) {
+	this.interval = setInterval(this.save.bind(this), time);
+	return this;
+};
+
+JSONFile.prototype.stopSaving = function() {
+	clearInterval(this.interval);
+	return this;
+};
+
+JSONFile.prototype.get = function() {
+	return this.val;
+};
+
+JSONFile.prototype.set = function(val) {
+	this.val = val;
+	return this;
+};
+
+function create(o) {
+	var bot = new TwitchBot(o);
+	bot.run();
+	return bot;
+};
 
 var twitchbot = {
 	TwitchBot: TwitchBot,
 	loadJSON: loadJSON,
-	saveJSON: saveJSON
+	saveJSON: saveJSON,
+	JSONFile: JSONFile,
+	create: create
 };
 
 module.exports = twitchbot;
