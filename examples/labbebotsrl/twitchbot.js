@@ -1,7 +1,7 @@
 /*	TwitchBot
  *	@author: Albert ten Napel
  *	@mail: aptennap@gmail.com 
- *	@version: 0.9.1
+ *	@version: 0.9.2
  *
  * 	Options: {
  *		server: the irc server, defaults to 'irc.twitch.tv'
@@ -85,6 +85,7 @@ function TwitchBot(o) {
 	this._alwaysMod 	= [];
 	this._users 			= {};
 
+	var t = function() {var u = this.users(); return u[0|u.length*Math.random()]};
 	this.vars 				= {
 		name: this.name,
 		channel: this.channel,
@@ -94,7 +95,9 @@ function TwitchBot(o) {
 		users: function() {return this.users().join(', ')},
 		mods: function() {return this.mods().join(', ')},
 		commands: function() {return this.getCommands().join(', ')},
-		freecommands: function() {return this.getFreeCommands().join(', ')}
+		freecommands: function() {return this.getFreeCommands().join(', ')},
+		user: t,
+		randuser: t
 	};
 
 	this.file = o.file || 'bot.json';
