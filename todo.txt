@@ -1,5 +1,17 @@
 TwitchBot.js
 	Enable/disable commands
 	In the config:
-		freeCommands, modCommands, removeCommands, disableCommands
+		freeCommands
+		modCommands
+		removeCommands
+		disableCommands
+		aliases
 	JS code in vars
+	Method documentation
+	Command help
+Slots.js
+	Make it more fun
+Bet.js
+	Make a betting lib
+Quiz.js
+	Make a quiz lib
