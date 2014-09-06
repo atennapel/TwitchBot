@@ -1,0 +1,5 @@
+TwitchBot.js
+	Enable/disable commands
+	In the config:
+		freeCommands, modCommands, removeCommands, disableCommands
+	JS code in vars
