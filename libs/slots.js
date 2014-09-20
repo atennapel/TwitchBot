@@ -1,6 +1,6 @@
 /* Slot machine lib for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.3
+ * @version: 0.4
  *
  * Adds a simple slots machine to the bots. User can gamble coins and three random TwitchFaces will be shown.
  * If all the faces are equal the user wins more coins.
@@ -11,11 +11,6 @@
  *		limit: the time (in milliseconds) a player has to wait before he can play again,
  *  	faces: an array of twitch faces, to use for the slots,
  *		winMultiplier: how much coins the player receives when he wins (gets multiplied with the input coins),
- *		
- *		saveToFile: whether to save and load the player data to file,
- *		file: the file to use,
- *		saveInInterval: whether to save every so often,
- *		saveTime: if saveInInterval is true, how often to save in milliseconds
  *	}
  *
  *	Free commands:
@@ -40,12 +35,8 @@ function(bot, twitchbot) {
 	var EMOTICONS = config.faces || ['Kappa', 'Keepo', 'FrankerZ', 'BibleThump', 'FailFish'];
 	var WIN_MULTIPLIER = config.winMultiplier || 10;
 
-	var FILE = config.file || 'slots.json';
-	var SAVE_TO_FILE = config.saveToFile || false;
-	var SAVE_IN_INTERVAL = config.saveInInterval || false;
-	var SAVE_TIME = config.saveTime || 60*1000;
-
 	var props = {
+		coins: true,
 		wins: true,
 		games: true,
 		coinsspent: true,
@@ -54,56 +45,46 @@ function(bot, twitchbot) {
 		coinsgiven: true,
 		coinsreceived: true
 	};
-	var limits = {};
-
-	var players = {};
-	if(SAVE_TO_FILE) {
-		var file = new twitchbot.JSONFile(FILE);
-		file.onExitSave(bot);
-		if(SAVE_IN_INTERVAL) file.saveEvery(SAVE_TIME);
-		players = file.load().get();
-	}
 
 	var randNum = function() {return 0|Math.random()*EMOTICONS.length};
 	var numToEmoticon = function(n) {return EMOTICONS[n]};
 	var checkPlayer = function(player) {
-		if(typeof players[player] == 'undefined')
-			players[player] = {
-				coins: STARTINGAMOUNT,
-				wins: 0,
-				games: 0,
-				coinsspent: 0,
-				coinswon: 0,
-				coinslost: 0,
-				coinsgiven: 0,
-				coinsreceived: 0
-			};
+		return bot.defaultAll(player, {
+			coins: STARTINGAMOUNT,
+			wins: 0,
+			games: 0,
+			coinsspent: 0,
+			coinswon: 0,
+			coinslost: 0,
+			coinsgiven: 0,
+			coinsreceived: 0,
+			limits: 0
+		});
 	};
 	var working = true;
 
 	bot.addCommand('@slots', function(o) {
 		if(!working) return;
 
-		var player = o.from.toLowerCase();
+		var player = o.from;
+		var data = checkPlayer(player);
 		var amount = +o.args[0];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0)
 			return player + ': Use the command like: !slots [amount to gamble, positive number]';
 
-		if(!limits[player]) limits[player] = 0;
-		var time = limits[player];
+		var time = data.limit;
 		var now = Date.now();
 		if(now - time < LIMIT)
 			return player + ': You have to wait ' + (0|(LIMIT - (now - time))/1000) + ' more seconds before you can play again.';
-		limits[player] = now;
+		data.limit = now;
 
-		checkPlayer(player);
-		var playerAmount = players[player].coins;
+		var playerAmount = data.coins;
 		if(playerAmount <= 0 || playerAmount < amount) return player + ": You don't have enough " + COINNAME + ".";
 		
-		players[player].coins -= amount;
-		players[player].coinsspent += amount;
-		players[player].games++;
+		data.coins -= amount;
+		data.coinsspent += amount;
+		data.games++;
 		
 		var r = [1, 2, 3].map(randNum);
 		var e = r.map(numToEmoticon).join(' ');
@@ -111,49 +92,47 @@ function(bot, twitchbot) {
 		
 		if(r[0] == r[1] && r[1] == r[2]) {
 			var winamount = amount * WIN_MULTIPLIER;
-			players[player].coins += winamount;
-			players[player].wins++;
-			players[player].coinswon += winamount;
+			data.coins += winamount;
+			data.wins++;
+			data.coinswon += winamount;
 			return player + ": " + e + ", you won " + winamount + " " + COINNAME + "!";
 		} else {
-			players[player].coinslost += amount;
+			data.coinslost += amount;
 			return player + ": " + e + ", you lost " + amount + " " + COINNAME + "!";
 		}
 	});
 
 	bot.addCommand('@give', function(o) {
-		var player = o.from.toLowerCase();
-		var to = o.args[0].toLowerCase();
+		var player = o.from;
+		var data = checkPlayer(player);
+		var to = o.args[0];
+		var dataTo = checkPlayer(to);
+
 		var amount = +o.args[1];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0 || player == to)
 			return player + ': Use the command like: !give [user] [amount, positive number]';
 
-		checkPlayer(player);
-		var playerAmount = players[player].coins;
+		var playerAmount = data.coins;
 		if(playerAmount < amount) return player + ": You don't have enough " + COINNAME + ".";
 		
-		checkPlayer(to);
-
-		players[player].coins -= amount;
-		players[player].coinsgiven += amount;
-		players[to].coins += amount;
-		players[to].coinsreceived += amount;
+		data.coins -= amount;
+		data.coinsgiven += amount;
+		dataTo.coins += amount;
+		dataTo.coinsreceived += amount;
 
 		return player + ": You gave " + amount + " " + COINNAME + " to " + to + "!";
 	});
 
 	bot.addCommand('@coins', function(o) {
-		var player = o.from.toLowerCase();
-		checkPlayer(player);
-
-		return player + ": You have " + (players[player].coins) + " " + COINNAME + ".";
+		var player = o.from;
+		var data = checkPlayer(player);
+		return player + ": You have " + (data.coins) + " " + COINNAME + ".";
 	});
 
 	bot.addCommand('@stats', function(o) {
-		var player = o.from.toLowerCase();
-		checkPlayer(player);
-		var po = players[player];
+		var player = o.from;
+		var po = checkPlayer(player);
 		
 		return player + ": " +
 			po.wins + '/' + po.games + ' wins (' + (0|(po.wins/po.games)*100) + '%), ' +
@@ -165,6 +144,7 @@ function(bot, twitchbot) {
 	});
 	bot.addCommand('@allstats', function() {
 		var po = {
+			coins: 0,
 			wins: 0,
 			games: 0,
 			coinsspent: 0,
@@ -173,6 +153,8 @@ function(bot, twitchbot) {
 			coinsgiven: 0,
 			coinsreceived: 0
 		};
+
+		var players = bot.getAllData();
 
 		for(var pl in players)
 			for(var k in po)
@@ -190,6 +172,8 @@ function(bot, twitchbot) {
 		var type = o.args[0] || 'coins';
 		if(!props[type])
 			return 'The arguments for ranking must be one of: ' + Object.keys(props).join(', ');
+
+		var players = bot.getAllData();
 		var a = Object.keys(players)
 				.map(function(name) {return {name: name, val: players[name][type]}})
 				.sort(function(a, b) {return b.val - a.val})
@@ -201,25 +185,19 @@ function(bot, twitchbot) {
 	});
 
 	bot.addCommand('add', function(o) {
-		var player = o.from.toLowerCase();
-		var to = o.args[0].toLowerCase();
+		var player = o.from;
+		var to = o.args[0];
+		var data = checkPlayer(to);
 		var amount = +o.args[1];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0)
 			return player + ': Use the command like: !give [user] [amount, positive number]';
 		
-		checkPlayer(player);
-		checkPlayer(to);
-
-		players[to].coins += amount;
+		data.coins += amount;
 
 		return player + ": You added " + amount + " " + COINNAME + " to " + to + "!";
 	});
 
 	bot.addCommand('turnoffslots', function() {working = false});
 	bot.addCommand('turnonslots', function() {working = true});
-
-	return {
-		players: players
-	};
 }

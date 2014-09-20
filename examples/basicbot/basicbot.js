@@ -1,5 +1,5 @@
 // import the library
-var twitchbot = require('twitchbot');
+var twitchbot = require('./twitchbot');
 
 // create the bot
 var bot = new twitchbot.TwitchBot({

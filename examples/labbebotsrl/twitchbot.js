@@ -1,7 +1,7 @@
 /*	TwitchBot
  *	@author: Albert ten Napel
  *	@mail: aptennap@gmail.com 
- *	@version: 0.9.2
+ *	@version: 0.9.5
  *
  * 	Options: {
  *		server: the irc server, defaults to 'irc.twitch.tv'
@@ -21,11 +21,23 @@
  *
  *		commands: a list (or object) of simple commands
  *		intervals: a list of {interval: [time in milliseconds], message: [message]} objects, these messages will be shown at their interval
+ *
+ *		disableCommands: a list of commands to be initially disabled
+ *		freeCommands: a list of commands to be initially free
+ *		modCommands: a list of commands to be initially mod-only
+ *		removeCommands: a list of commands to be removed on startup
+ *		alwaysMod: a list of names that will always be mods
+ *		aliases: an object where the keys are commands and the values a list of aliases
  *		
- *		saveToFile: whether to save and load the player data to file,
+ *		saveToFile: whether to save and load the bot (commands, vars and mods) to file,
  *		file: the file to use,
  *		saveInInterval: whether to save every so often,
  *		saveTime: if saveInInterval is true, how often to save in milliseconds
+ *
+ *		userDataSaveToFile: whether to save and load the user data to file,
+ *		userDataFile: the file to use,
+ *		userDataSaveInInterval: whether to save every so often,
+ *		userDataSaveTime: if saveInInterval is true, how often to save in milliseconds
  *	}
  */
 
@@ -82,7 +94,8 @@ function TwitchBot(o) {
 	if(!this.channel) 	throw 'No channel provided.';
 
 	this.commands 		= {};
-	this._alwaysMod 	= [];
+	this.comenabled		= {};
+	this._alwaysMod 	= o.alwaysMod || [];
 	this._users 			= {};
 
 	var t = function() {var u = this.users(); return u[0|u.length*Math.random()]};
@@ -100,14 +113,29 @@ function TwitchBot(o) {
 		randuser: t
 	};
 
+	// saving
 	this.file = o.file || 'bot.json';
-	this._autosave = o.saveToFile || false;
+	this._autosave = o.saveToFile || o.saveInInterval || false;
 
 	if(o.saveInInterval)
 		setInterval(this.autosave.bind(this), o.saveTime || 60*1000);
 
 	if(this._autosave) this.load(this.file);
 	
+	// saving user data
+	this.userData 		= {};
+	this.userDataFile = o.userDataFile || 'userdata.json';
+	this._userDataAutosave = o.userDataSaveToFile || o.userDataSaveInInterval || false;
+
+	if(o.userDataSaveInInterval)
+		setInterval((function() {
+			saveJSON(this.userDataFile, this.userData);
+		}).bind(this), o.userDataSaveTime || 60*1000);
+
+	if(this._userDataAutosave)
+		this.userData = loadJSON(this.userDataFile);
+
+	// rest
 	if(o.libs || o.libsLocation) {
 		var folder = o.libsLocation || 'libs';
 		if(o.libs == 'all' || !o.libs) this.loadLibs(folder);
@@ -131,6 +159,32 @@ function TwitchBot(o) {
 			var t = c.interval || 1000*60*10;
 			var m = c.message;
 			this.addIntervalMessage(m, t);
+		}
+	}
+
+	if(o.freeCommands) {
+		for(var i = 0, a = o.freeCommands, l = a.length; i < l; i++)
+			if(this.commands[a[i]])
+				this.commands[a[i]].free = true;
+	}
+	if(o.modCommands) {
+		for(var i = 0, a = o.modCommands, l = a.length; i < l; i++)
+			if(this.commands[a[i]])
+				this.commands[a[i]].free = false;
+	}
+	if(o.disableCommands) {
+		for(var i = 0, a = o.disableCommands, l = a.length; i < l; i++)
+			this.disableCommand(a[i]);
+	}
+	if(o.removeCommands) {
+		for(var i = 0, a = o.removeCommands, l = a.length; i < l; i++)
+			delete this.commands[a[i]];
+	}
+	if(o.aliases) {
+		for(var c in o.aliases) {
+			var a = o.aliases[c];
+			for(var i = 0, l = a.length; i < l; i++)
+				this.commands[a[i]] = this.commands[c];
 		}
 	}
 };
@@ -165,6 +219,9 @@ TwitchBot.prototype.doExit = function() {
 		a[i].call(this);
 	process.exit();	
 };
+
+TwitchBot.prototype.disableCommand = function(name) {this.comdis[name] = true; return this};
+TwitchBot.prototype.enableCommand = function(name) { this.comdis[name] = false; return this};
 
 TwitchBot.prototype.run = function() {
 	this.bot = new irc.Client(this.server, this.name, {
@@ -378,6 +435,54 @@ TwitchBot.prototype.load = function(file) {
 		else throw err;
 	}
 	return this;
+};
+
+TwitchBot.prototype.checkUser = function(name) {
+	var name = name.trim().toLowerCase();
+	if(!name) throw 'Empty name!';
+	this.userData[name] = this.userData[name] || {}; 
+	return name;
+};
+
+TwitchBot.prototype.getDataUsers = function() {
+	return Object.keys(this.userData);
+};
+
+TwitchBot.prototype.getAllData = function() {
+	return this.userData;
+};
+
+TwitchBot.prototype.getData = function(name) {
+	return this.userData[this.checkUser(name)];
+};
+
+TwitchBot.prototype.default = function(name, prop, v) {
+	var name = this.checkUser(name);
+	if(typeof this.get(name, prop) == 'undefined')
+		this.set(name, prop, v);
+	return this.userData[name][prop];
+};
+
+TwitchBot.prototype.defaultAll = function(name, o) {
+	for(var k in o)
+		this.default(name, k, o[k]);
+	return this.getData(name);
+};
+
+TwitchBot.prototype.get = function(name, prop) {
+	var name = this.checkUser(name);
+	return this.userData[name][prop];
+};
+
+TwitchBot.prototype.set = function(name, prop, v) {
+	var name = this.checkUser(name);
+	return this.userData[name][prop] = typeof v == 'function'? v(this.userData[name][prop]): v;
+};
+
+TwitchBot.prototype.setAll = function(name, o) {
+	for(var k in o)
+		this.set(name, k, o[k]);
+	return this.getData(name);
 };
 
 var anyToJSONObj = function(x) {

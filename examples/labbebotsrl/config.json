@@ -7,8 +7,8 @@
 
 	"libs": "all",
 
-	"saveToFile": true,
 	"saveInInterval": true,
+	"userDataSaveInInterval": true,
 
 	"commands": [
 		"@toll", "Toll toll super toll!",
@@ -29,11 +29,6 @@
 		"limit": 10000,
 		"winMultiplier": 1000,
 		"faces": ["Kappa", "Keepo", "FrankerZ", "BibleThump", "FailFish"],
-		
-		"saveToFile": true,
-		"file": "slots.json",
-		"saveInInterval": true,
-		"saveTime": 60000
 	},
 	"logger": {
 		"logPrivateMessages": false,
