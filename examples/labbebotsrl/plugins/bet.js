@@ -1,6 +1,6 @@
 /* Betting plugin for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.1
+ * @version: 0.2
  *
  * Adds a betting system to the bot. Mods can open bets and users can bet coins on certain outcomes.
  *
@@ -49,6 +49,8 @@ function(bot, twitchbot) {
 	};
 
 	function getOutcome(x) {
+		if(typeof x == 'number')
+			return {type: 'number', val: x};
 		var x = x.trim(), n = +x;
 		if(/^([0-9]+[hmsu])+$/i.test(x)) {
 			var o = {h: 0, m: 0, s: 0, u: 0};
