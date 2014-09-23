@@ -5,7 +5,7 @@
 	"debug": true,
 	"log": true,
 
-	"libs": "all",
+	"plugins": "all",
 
 	"saveInInterval": true,
 	"userDataSaveInInterval": true,

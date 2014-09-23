@@ -1,6 +1,6 @@
 /* Slot machine plugin for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.4
+ * @version: 0.5
  *
  * Adds a simple slots machine to the bots. User can gamble coins and three random TwitchFaces will be shown.
  * If all the faces are equal the user wins more coins.
@@ -45,7 +45,9 @@ function(bot, twitchbot) {
 			games: 0,
 			wins: 0,
 			coinswon: 0,
-			coinslost: 0
+			coinslost: 0,
+			coinsgiven: 0,
+			coinsreceived: 0
 		});
 	}
 
@@ -123,7 +125,7 @@ function(bot, twitchbot) {
 		var rest = o.rest.trim();
 
 		if(rest)
-			player + ': ' + rest.split(/\s+/g).map(function(x) {return po[x] + ' ' + x}).join(', ');
+			return player + ': ' + rest.split(/\s+/g).map(function(x) {return po[x] + ' ' + x}).join(', ');
 
 		return player + ": " +
 			po.wins + '/' + po.games + ' wins (' + (0|(po.wins/po.games)*100) + '%), ' +

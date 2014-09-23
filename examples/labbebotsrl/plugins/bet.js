@@ -49,21 +49,21 @@ function(bot, twitchbot) {
 	};
 
 	function getOutcome(x) {
-		var x = x.trim(), n = isNaN(x);
-		if(!isNaN(n)) return {type: 'number', val: n};
-		else if(/^([0-9]+[hmsu])+$/i.test(x)) {
+		var x = x.trim(), n = +x;
+		if(/^([0-9]+[hmsu])+$/i.test(x)) {
 			var o = {h: 0, m: 0, s: 0, u: 0};
-			var a = s.split(/[0-9]+[hmsu]/g);
+			var a = x.match(/[0-9]+[hmsu]/g);
 			for(var i = 0, l = a.length; i < l; i++) {
 				var c = a[i], n = +c.slice(0, -1), t = c[c.length-1];
 				o[t] = n;
 			}
-			var d = new Date(0);
-			d.setHours(o.h);
-			d.setMinutes(o.m);
-			d.setSeconds(o.s);
-			d.setMilliseconds(o.u);
+			var d = 0;
+			d += o.u;
+			d += o.s * 1000;
+			d += o.m * 1000 * 60;
+			d += o.h * 1000 * 60 * 60;
 			return {type: 'time', val: +d};
+		} if(!isNaN(n)) { return {type: 'number', val: n};
 		} else if(/^[^\s]+$/.test(x)) return {type: 'word', val: x};
 		else return null;
 	}
@@ -75,7 +75,6 @@ function(bot, twitchbot) {
 	bot.addCommand('@pot', function() {return 'Current pot: ' + pot});
 
 	bot.addCommand('endbet', function(o) {
-		if(!betsopen) return;
 		if(bets.length == 0) return 'No bets were made.';
 
 		var outcome_s = o.rest.trim('').split(/\s+/g)[0];
@@ -87,21 +86,25 @@ function(bot, twitchbot) {
 		if(t == 'word') {
 			for(var i = 0, l = bets.length; i < l; i++) {
 				var c = bets[i];
-				if(t == c.type && c.val == val) winners.push(c.player);
+				if(t == c.outcome.type && c.outcome.val == val)
+					winners.push(c.player);
 			}
 		} else {
 			var pos = [];
 			for(var i = 0, l = bets.length; i < l; i++) {
 				var c = bets[i];
-				if(t == c.type) pos.push({player: c.player, val: c.val});
+				if(t == c.outcome.type)
+					pos.push({player: c.player, val: c.outcome.val});
 			}
 			pos = pos.sort(function(x, y) {
 				return x.val - y.val;
 			});
 			var f = pos[0].val;
-			for(var i = 0, l = pos.length; i < l; i++)
-				if(f == pos[i].val)
+			for(var i = 0, l = pos.length; i < l; i++) {
+				if(f == pos[i].val) {
 					winners.push(pos[i].player);
+				}
+			}
 		}
 
 		var amount = 0|pot/winners.length;
@@ -140,10 +143,11 @@ function(bot, twitchbot) {
 		var playerAmount = data.coins;
 		if(playerAmount <= 0 || playerAmount < amount) return player + ": You don't have enough " + COINNAME + ".";
 		
-		var outcome_s = o.rest.slice(o.args[0].length+1).trim('').split(/\s+/g)[0];
+		var outcome_s = o.args[1];
 		var outcome = getOutcome(outcome_s);
 		if(!outcome) return player + ': Invalid outcome';
 
+		pot += amount;
 		data.coins -= amount;
 		data.betcoinsspent += amount;
 		data.betgames++;
