@@ -1,4 +1,4 @@
-/* Slot machine lib for TwitchBot
+/* Slot machine plugin for TwitchBot
  * @author: Albert ten Napel
  * @version: 0.4
  *
@@ -7,7 +7,6 @@
  *
  * 	Options: {
  *		coinName: name of the coin,
- *		startingAmount: the amount of coins players start out with,
  *		limit: the time (in milliseconds) a player has to wait before he can play again,
  *  	faces: an array of twitch faces, to use for the slots,
  *		winMultiplier: how much coins the player receives when he wins (gets multiplied with the input coins),
@@ -30,38 +29,25 @@ function(bot, twitchbot) {
 	var config = bot.config.slots || {};
 
 	var COINNAME = config.coinName || 'coin(s)';
-	var STARTINGAMOUNT = typeof config.startingAmount == 'number'? config.startingAmount: 100;
 	var LIMIT = typeof config.limit == 'number'? config.limit: 60000;
 	var EMOTICONS = config.faces || ['Kappa', 'Keepo', 'FrankerZ', 'BibleThump', 'FailFish'];
 	var WIN_MULTIPLIER = config.winMultiplier || 10;
 
-	var props = {
-		coins: true,
-		wins: true,
-		games: true,
-		coinsspent: true,
-		coinswon: true,
-		coinslost: true,
-		coinsgiven: true,
-		coinsreceived: true
-	};
-
 	var randNum = function() {return 0|Math.random()*EMOTICONS.length};
 	var numToEmoticon = function(n) {return EMOTICONS[n]};
-	var checkPlayer = function(player) {
-		return bot.defaultAll(player, {
-			coins: STARTINGAMOUNT,
-			wins: 0,
-			games: 0,
-			coinsspent: 0,
-			coinswon: 0,
-			coinslost: 0,
-			coinsgiven: 0,
-			coinsreceived: 0,
-			limits: 0
-		});
-	};
 	var working = true;
+
+	function checkPlayer(p) {
+		return bot.getData(p, {
+			limit: 0,
+			coins: 100,
+			coinsspent: 0,
+			games: 0,
+			wins: 0,
+			coinswon: 0,
+			coinslost: 0
+		});
+	}
 
 	bot.addCommand('@slots', function(o) {
 		if(!working) return;
@@ -133,7 +119,12 @@ function(bot, twitchbot) {
 	bot.addCommand('@stats', function(o) {
 		var player = o.from;
 		var po = checkPlayer(player);
-		
+
+		var rest = o.rest.trim();
+
+		if(rest)
+			player + ': ' + rest.split(/\s+/g).map(function(x) {return po[x] + ' ' + x}).join(', ');
+
 		return player + ": " +
 			po.wins + '/' + po.games + ' wins (' + (0|(po.wins/po.games)*100) + '%), ' +
 			po.coinsspent + ' coins spent, ' + 
@@ -142,8 +133,14 @@ function(bot, twitchbot) {
 			po.coinsgiven + ' coins given, ' + 
 			po.coinsreceived + ' coins received.';
 	});
-	bot.addCommand('@allstats', function() {
-		var po = {
+	bot.addCommand('@allstats', function(o) {
+		var po;
+		var rest = o.rest.trim();
+		if(rest) {
+			po = {};
+			for(var i = 0, t = rest.split(/\s+/g), l = t.length; i < l; i++)
+				po[rest[i]] = 0;
+		} else po = {
 			coins: 0,
 			wins: 0,
 			games: 0,
@@ -170,9 +167,6 @@ function(bot, twitchbot) {
 
 	bot.addCommand('@ranking', function(o) {
 		var type = o.args[0] || 'coins';
-		if(!props[type])
-			return 'The arguments for ranking must be one of: ' + Object.keys(props).join(', ');
-
 		var players = bot.getAllData();
 		var a = Object.keys(players)
 				.map(function(name) {return {name: name, val: players[name][type]}})

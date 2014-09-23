@@ -1,4 +1,4 @@
-/* Logger lib for TwitchBot
+/* Logger plugin for TwitchBot
  * @author: Albert ten Napel
  * @version: 0.7
  *

@@ -1,4 +1,4 @@
-/* Base lib for TwitchBot
+/* Base plugin for TwitchBot
  * @author: Albert ten Napel
  * @version: 0.1
  *

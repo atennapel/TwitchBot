@@ -1,4 +1,4 @@
-/* Quotes lib for TwitchBot
+/* Quotes plugin for TwitchBot
  * @author: Albert ten Napel
  * @version: 0.3
  *

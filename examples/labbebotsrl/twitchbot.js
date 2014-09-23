@@ -1,7 +1,7 @@
 /*	TwitchBot
  *	@author: Albert ten Napel
  *	@mail: aptennap@gmail.com 
- *	@version: 0.9.5
+ *	@version: 0.9.6
  *
  * 	Options: {
  *		server: the irc server, defaults to 'irc.twitch.tv'
@@ -11,13 +11,13 @@
  *		password: the irc password (for twitch retrieve one at tmi.twitch.tv)
  *
  *		debug: whether to show irc debug messages
- *		log: whether to use loggers (like the logger lib)
+ *		log: whether to use loggers (like the logger plugin)
  *
  *		commandChar: the character that precedes commands, defaults to '!'
  *		varChar: the character to surrounds variables in commands, defaults to '`'
  *
- *		libsLocation: the directory where the libs are stored (defaults to 'libs')
- *		libs: a list of which libs to use (use 'all' to load all libs in the libs directory)
+ *		pluginsLocation: the directory where the plugins are stored (defaults to 'plugins')
+ *		plugins: a list of which plugins to use (use 'all' to load all plugins in the plugins directory)
  *
  *		commands: a list (or object) of simple commands
  *		intervals: a list of {interval: [time in milliseconds], message: [message]} objects, these messages will be shown at their interval
@@ -38,6 +38,8 @@
  *		userDataFile: the file to use,
  *		userDataSaveInInterval: whether to save every so often,
  *		userDataSaveTime: if saveInInterval is true, how often to save in milliseconds
+ *		
+ *		userDataDefaults: an object of defaults to properties, for example: {"coins": 100, "wins": 10}
  *	}
  */
 
@@ -97,6 +99,7 @@ function TwitchBot(o) {
 	this.comenabled		= {};
 	this._alwaysMod 	= o.alwaysMod || [];
 	this._users 			= {};
+	this.userDefaults = o.userDataDefaults || {};
 
 	var t = function() {var u = this.users(); return u[0|u.length*Math.random()]};
 	this.vars 				= {
@@ -136,10 +139,10 @@ function TwitchBot(o) {
 		this.userData = loadJSON(this.userDataFile);
 
 	// rest
-	if(o.libs || o.libsLocation) {
-		var folder = o.libsLocation || 'libs';
-		if(o.libs == 'all' || !o.libs) this.loadLibs(folder);
-		else this.loadLibs(folder, o.libs);
+	if(o.plugins || o.pluginsLocation) {
+		var folder = o.pluginsLocation || 'plugins';
+		if(o.plugins == 'all' || !o.plugins) this.loadPlugins(folder);
+		else this.loadPlugins(folder, o.plugins);
 	}
 
 	if(o.commands) {
@@ -390,7 +393,7 @@ TwitchBot.prototype.addVars = function() {
 
 TwitchBot.prototype.addVar = TwitchBot.prototype.addVars;
 
-TwitchBot.prototype.loadLib = function(file) {
+TwitchBot.prototype.loadPlugin = function(file) {
 	if(!/.*\.js/i.test(file)) file += '.js';
 	var t = file.split('/');
 	var name = t[t.length-1].split('.').slice(0, -1).join('.');
@@ -400,11 +403,11 @@ TwitchBot.prototype.loadLib = function(file) {
 	return this;
 };
 
-TwitchBot.prototype.loadLibs = function(files, a) {
-	if(Array.isArray(files)) files.forEach(this.loadLib.bind(this));
+TwitchBot.prototype.loadPlugins = function(files, a) {
+	if(Array.isArray(files)) files.forEach(this.loadPlugin.bind(this));
 	else {
 		var fl = fs.readdirSync(files).filter(function(x) {return /.*\.js/i.test(x)}).forEach((function(x) {
-			if(!a || a.indexOf(x) > -1) this.loadLib.call(this, files+'/'+x);
+			if(!a || a.indexOf(x) > -1) this.loadPlugin.call(this, files+'/'+x);
 		}).bind(this));
 	}
 	return this;
@@ -452,31 +455,30 @@ TwitchBot.prototype.getAllData = function() {
 	return this.userData;
 };
 
-TwitchBot.prototype.getData = function(name) {
+TwitchBot.prototype.getData = function(name, o) {
+	if(o) for(var k in o) this.get(name, k, o[k]);
 	return this.userData[this.checkUser(name)];
 };
 
-TwitchBot.prototype.default = function(name, prop, v) {
+TwitchBot.prototype.get = function(name, prop, d) {
 	var name = this.checkUser(name);
-	if(typeof this.get(name, prop) == 'undefined')
-		this.set(name, prop, v);
-	return this.userData[name][prop];
-};
-
-TwitchBot.prototype.defaultAll = function(name, o) {
-	for(var k in o)
-		this.default(name, k, o[k]);
-	return this.getData(name);
-};
-
-TwitchBot.prototype.get = function(name, prop) {
-	var name = this.checkUser(name);
-	return this.userData[name][prop];
+	var v = this.userData[name][prop];
+	if(typeof v == 'undefined') {
+		if(typeof this.userDefaults[prop] != 'undefined') {
+			var d = this.userDefaults[prop];
+			this.userData[name][prop] = d;
+			return d;
+		} else if(typeof d != 'undefined') {
+			this.userData[name][prop] = d;
+			return d;
+		}
+	}
+	return v;
 };
 
 TwitchBot.prototype.set = function(name, prop, v) {
 	var name = this.checkUser(name);
-	return this.userData[name][prop] = typeof v == 'function'? v(this.userData[name][prop]): v;
+	return this.userData[name][prop] = typeof v == 'function'? v(this.get(name, prop)): v;
 };
 
 TwitchBot.prototype.setAll = function(name, o) {

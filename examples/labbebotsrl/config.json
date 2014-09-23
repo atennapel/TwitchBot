@@ -9,6 +9,10 @@
 
 	"saveInInterval": true,
 	"userDataSaveInInterval": true,
+	
+	"userDataDefaults": {
+		"coins": 100
+	},
 
 	"commands": [
 		"@toll", "Toll toll super toll!",
@@ -25,10 +29,12 @@
 
 	"slots": {
 		"coinName": "labbecoin(s)",
-		"startingAmount": 100,
 		"limit": 10000,
 		"winMultiplier": 1000,
-		"faces": ["Kappa", "Keepo", "FrankerZ", "BibleThump", "FailFish"],
+		"faces": ["Kappa", "Keepo", "FrankerZ", "BibleThump", "FailFish"]
+	},
+	"bet": {
+		"coinName": "labbecoin(s)"
 	},
 	"logger": {
 		"logPrivateMessages": false,
