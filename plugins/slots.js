@@ -1,6 +1,6 @@
 /* Slot machine plugin for TwitchBot
  * @author: Albert ten Napel
- * @version: 0.5
+ * @version: 0.6
  *
  * Adds a simple slots machine to the bots. User can gamble coins and three random TwitchFaces will be shown.
  * If all the faces are equal the user wins more coins.
@@ -10,6 +10,7 @@
  *		limit: the time (in milliseconds) a player has to wait before he can play again,
  *  	faces: an array of twitch faces, to use for the slots,
  *		winMultiplier: how much coins the player receives when he wins (gets multiplied with the input coins),
+ *		whisper: use whispers when responding to users (except on winning)
  *	}
  *
  *	Free commands:
@@ -32,6 +33,7 @@ function(bot, twitchbot) {
 	var LIMIT = typeof config.limit == 'number'? config.limit: 60000;
 	var EMOTICONS = config.faces || ['Kappa', 'Keepo', 'FrankerZ', 'BibleThump', 'FailFish'];
 	var WIN_MULTIPLIER = config.winMultiplier || 10;
+	var WHISPER = config.whisper || false;
 
 	var randNum = function() {return 0|Math.random()*EMOTICONS.length};
 	var numToEmoticon = function(n) {return EMOTICONS[n]};
@@ -51,6 +53,11 @@ function(bot, twitchbot) {
 		});
 	}
 
+	function whisper(player, msg) {
+		if(WHISPER) bot.whisper(player, msg);
+		else return player + ': ' + msg;
+	}
+
 	bot.addCommand('@slots', function(o) {
 		if(!working) return;
 
@@ -59,16 +66,16 @@ function(bot, twitchbot) {
 		var amount = +o.args[0];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0)
-			return player + ': Use the command like: !slots [amount to gamble, positive number]';
+			return whisper(player, 'Use the command like: !slots [amount to gamble, positive number]');
 
 		var time = data.limit;
 		var now = Date.now();
 		if(now - time < LIMIT)
-			return player + ': You have to wait ' + (0|(LIMIT - (now - time))/1000) + ' more seconds before you can play again.';
+			return whisper(player, 'You have to wait ' + (0|(LIMIT - (now - time))/1000) + ' more seconds before you can play again.');
 		data.limit = now;
 
 		var playerAmount = data.coins;
-		if(playerAmount <= 0 || playerAmount < amount) return player + ": You don't have enough " + COINNAME + ".";
+		if(playerAmount <= 0 || playerAmount < amount) return whisper(player, "You don't have enough " + COINNAME + ".");
 		
 		data.coins -= amount;
 		data.coinsspent += amount;
@@ -83,10 +90,10 @@ function(bot, twitchbot) {
 			data.coins += winamount;
 			data.wins++;
 			data.coinswon += winamount;
-			return player + ": " + e + ", you won " + winamount + " " + COINNAME + "!";
+			return player + ": " + e + " , you won " + winamount + " " + COINNAME + "!";
 		} else {
 			data.coinslost += amount;
-			return player + ": " + e + ", you lost " + amount + " " + COINNAME + "!";
+			return whisper(player, e + " , you lost " + amount + " " + COINNAME + "!");
 		}
 	});
 
@@ -99,10 +106,10 @@ function(bot, twitchbot) {
 		var amount = +o.args[1];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0 || player == to)
-			return player + ': Use the command like: !give [user] [amount, positive number]';
+			return whisper(player, 'Use the command like: !give [user] [amount, positive number]');
 
 		var playerAmount = data.coins;
-		if(playerAmount < amount) return player + ": You don't have enough " + COINNAME + ".";
+		if(playerAmount < amount) return whisper(player, "You don't have enough " + COINNAME + ".");
 		
 		data.coins -= amount;
 		data.coinsgiven += amount;
@@ -115,7 +122,7 @@ function(bot, twitchbot) {
 	bot.addCommand('@coins', function(o) {
 		var player = o.from;
 		var data = checkPlayer(player);
-		return player + ": You have " + (data.coins) + " " + COINNAME + ".";
+		return whisper(player, "You have " + (data.coins) + " " + COINNAME + ".");
 	});
 
 	bot.addCommand('@stats', function(o) {
@@ -125,15 +132,15 @@ function(bot, twitchbot) {
 		var rest = o.rest.trim();
 
 		if(rest)
-			return player + ': ' + rest.split(/\s+/g).map(function(x) {return po[x] + ' ' + x}).join(', ');
+			return whisper(player, rest.split(/\s+/g).map(function(x) {return po[x] + ' ' + x}).join(', '));
 
-		return player + ": " +
+		return whisper(player, 
 			po.wins + '/' + po.games + ' wins (' + (0|(po.wins/po.games)*100) + '%), ' +
 			po.coinsspent + ' coins spent, ' + 
 			po.coinswon + ' coins won, ' + 
 			po.coinslost + ' coins lost, ' + 
 			po.coinsgiven + ' coins given, ' + 
-			po.coinsreceived + ' coins received.';
+			po.coinsreceived + ' coins received.');
 	});
 	bot.addCommand('@allstats', function(o) {
 		var po;
@@ -187,11 +194,11 @@ function(bot, twitchbot) {
 		var amount = +o.args[1];
 		if(!isNaN(amount)) amount |= 0;	
 		if(!amount || isNaN(amount) || amount <= 0)
-			return player + ': Use the command like: !give [user] [amount, positive number]';
+			return whisper(player, 'Use the command like: !give [user] [amount, positive number]');
 		
 		data.coins += amount;
 
-		return player + ": You added " + amount + " " + COINNAME + " to " + to + "!";
+		return whisper(player, "You added " + amount + " " + COINNAME + " to " + to + "!");
 	});
 
 	bot.addCommand('turnoffslots', function() {working = false});
